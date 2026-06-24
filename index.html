@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Listening Practice — Computer Engineering</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #4f8ef7;
+    --accent2: #6ee7b7;
+    --text: #e8eaf0;
+    --muted: #7b82a0;
+    --correct: #22c55e;
+    --wrong: #ef4444;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 0 0 40px;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+    border-bottom: 1px solid #2a2e45;
+    padding: 18px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-size: 13px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .progress-bar-wrap {
+    margin-top: 10px;
+    background: #2a2e45;
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 5px;
+    text-align: right;
+  }
+
+  /* SECTION SELECTOR */
+  .section-nav {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid #1e2235;
+  }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .sec-btn {
+    flex-shrink: 0;
+    padding: 6px 13px;
+    border-radius: 99px;
+    border: 1.5px solid #2a2e45;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sec-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .sec-btn.done {
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+
+  /* EXERCISE PANEL */
+  .exercise {
+    display: none;
+    padding: 18px 16px;
+    animation: fadeIn 0.25s ease;
+  }
+  .exercise.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* UNIT TAG */
+  .unit-tag {
+    font-size: 11px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .ex-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  /* AUDIO PLAYER */
+  .audio-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 18px;
+    border: 1px solid #2a2e45;
+  }
+  .audio-wrap audio {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .audio-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* TEXT WITH BLANKS */
+  .passage {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    border: 1px solid #2a2e45;
+    line-height: 1.9;
+    font-size: 15px;
+    margin-bottom: 18px;
+  }
+  .passage p { margin-bottom: 8px; }
+  .passage p:last-child { margin-bottom: 0; }
+
+  /* BLANK INPUT */
+  .blank-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 2px;
+  }
+  .blank-num {
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 1px;
+  }
+  .blank-input {
+    background: var(--surface2);
+    border: 1.5px solid #3a3f5c;
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 3px 7px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 80px;
+    max-width: 140px;
+    text-align: center;
+  }
+  .blank-input:focus { border-color: var(--accent); }
+  .blank-input.correct {
+    border-color: var(--correct);
+    background: #052e16;
+    color: var(--correct);
+  }
+  .blank-input.wrong {
+    border-color: var(--wrong);
+    background: #2d0a0a;
+    color: var(--wrong);
+  }
+
+  /* ANSWER REVEAL */
+  .answer-reveal {
+    display: block;
+    font-size: 10px;
+    color: var(--correct);
+    font-weight: 700;
+    margin-top: 2px;
+    display: none;
+  }
+  .answer-reveal.show { display: block; }
+
+  /* SCORE BOX */
+  .score-box {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #2a2e45;
+  }
+  .score-box.show { display: flex; }
+  .score-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .score-details { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* BUTTONS */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-check {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-check:hover { background: #3a7ef0; }
+  .btn-next {
+    background: var(--accent2);
+    color: #0a2015;
+    display: none;
+  }
+  .btn-next.show { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-next:hover { background: #4dd4a0; }
+  .btn-reset {
+    background: transparent;
+    border: 1.5px solid #2a2e45;
+    color: var(--muted);
+    font-size: 13px;
+    flex: 0 0 auto;
+    padding: 13px 16px;
+  }
+  .btn-reset:hover { border-color: var(--muted); color: var(--text); }
+
+  /* COMPLETE */
+  .complete-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .complete-screen.show { display: block; }
+  .complete-icon { font-size: 64px; margin-bottom: 16px; }
+  .complete-screen h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .complete-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .btn-restart {
+    margin-top: 24px;
+    display: inline-block;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Career Paths · Computer Engineering</h1>
+  <h2>Listening Practice</h2>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:5%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">1 / 20</div>
+</header>
+
+<div class="section-nav" id="sectionNav"></div>
+
+<div id="exercises"></div>
+
+<div class="complete-screen" id="completeScreen">
+  <div class="complete-icon">🎉</div>
+  <h2>All Done!</h2>
+  <p>You completed all 20 listening exercises.<br>Great work on your exam prep!</p>
+  <button class="btn-restart" onclick="restartAll()">Start Over</button>
+</div>
+
+<script>
+const EXERCISES = [
+  {
+    id: 1,
+    unit: "Track 02 · p5 Ex5",
+    title: "Program Overview — Kempco Technical Institute",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_02_p5_Ex5.mp3",
+    parts: [
+      { text: "What will I learn in the computer engineering program? Start your ", blanks: [] },
+      { text: "career", blank: 1 },
+      { text: " as a computer engineer at Kempco. Our program teaches everything you need to know about computer engineering. This growing field has many ", blanks: [] },
+      { text: "career opportunities", blank: 2 },
+      { text: ". Begin with fundamental courses in engineering and computer science. Gain a strong understanding of ", blanks: [] },
+      { text: "mathematical analysis", blank: 3 },
+      { text: " and theory. Learn to develop computer ", blanks: [] },
+      { text: "software", blank: 4 },
+      { text: ", design your own computer ", blanks: [] },
+      { text: "programs", blank: 5 },
+      { text: ". Then other students will test them for ", blanks: [] },
+      { text: "functionality", blank: 6 },
+      { text: " and usability. Also, learn to investigate problems with ", blanks: [] },
+      { text: "hardware", blank: 7 },
+      { text: ", evaluate causes and implement appropriate ", blanks: [] },
+      { text: "solutions", blank: 8 },
+      { text: ". These skills will make you invaluable to potential ", blanks: [] },
+      { text: "employers", blank: 9 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 2,
+    unit: "Track 03 · p5 Ex6-7",
+    title: "Dialogue — Choosing a Major",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_03_p5_Ex6-7.mp3",
+    parts: [
+      { text: "Woman: Okay, let's look at your next semester. Did you decide on a ", blanks: [] },
+      { text: "major", blank: 1 },
+      { text: "?\nMan: I'm not sure. My goal is to go for something with good ", blanks: [] },
+      { text: "career potential", blank: 2 },
+      { text: ".\nWoman: I see you already took some ", blanks: [] },
+      { text: "mathematical analysis", blank: 3 },
+      { text: " courses.\nMan: I want to do a course that involves solving ", blanks: [] },
+      { text: "problems", blank: 4 },
+      { text: ".\nWoman: How about the computer engineering program? You will probably do well on the ", blanks: [] },
+      { text: "entrance exams", blank: 5 },
+      { text: ".\nMan: Do computer engineers focus on software or ", blanks: [] },
+      { text: "hardware", blank: 6 },
+      { text: "?\nWoman: Both, actually. The program teaches computer science and ", blanks: [] },
+      { text: "electrical engineering", blank: 7 },
+      { text: ".\nMan: Hmm, that sounds interesting. I'll look into it.", blanks: [] }
+    ]
+  },
+  {
+    id: 3,
+    unit: "Track 04 · p7 Ex5",
+    title: "Seacrest Computers — Product Lineup",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_04_p7_Ex5.mp3",
+    parts: [
+      { text: "Seacrest Computers manufactures a variety of products. We mostly create ", blanks: [] },
+      { text: "custom PCs", blank: 1 },
+      { text: " for individuals. Our desktops are great for your home or office. We also create ", blanks: [] },
+      { text: "laptops", blank: 2 },
+      { text: " and notebooks for mobile customers. Don't miss Seacrest's first ", blanks: [] },
+      { text: "tablet", blank: 3 },
+      { text: ". It is scheduled for release later this year. Seacrest also has a great product lineup for businesses. Our ", blanks: [] },
+      { text: "servers", blank: 4 },
+      { text: " are secure and reliable. Your job will become easier with our custom ", blanks: [] },
+      { text: "workstations", blank: 5 },
+      { text: ". Does your company process a lot of data? Allow us to design your new ", blanks: [] },
+      { text: "computer cluster", blank: 6 },
+      { text: ". We also install ", blanks: [] },
+      { text: "embedded", blank: 7 },
+      { text: " computers in company vehicles.", blanks: [] }
+    ]
+  },
+  {
+    id: 4,
+    unit: "Track 05 · p7 Ex6-7",
+    title: "Dialogue — Favorite Type of Computer",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_05_p7_Ex6-7.mp3",
+    parts: [
+      { text: "Woman: I think I prefer ", blanks: [] },
+      { text: "laptops", blank: 1 },
+      { text: " over other computers.\nMan: Really? Why?\nWoman: Well, I ", blanks: [] },
+      { text: "travel", blank: 2 },
+      { text: " a lot. Laptops are easy to carry and their ", blanks: [] },
+      { text: "capabilities", blank: 3 },
+      { text: " are similar to ", blanks: [] },
+      { text: "desktops", blank: 4 },
+      { text: ".\nMan: I guess I prefer ", blanks: [] },
+      { text: "workstations", blank: 5 },
+      { text: " because of their ", blanks: [] },
+      { text: "power", blank: 6 },
+      { text: ".\nWoman: I bet you'd really enjoy using a ", blanks: [] },
+      { text: "supercomputer", blank: 7 },
+      { text: ".\nMan: Yeah, I think I probably would.", blanks: [] }
+    ]
+  },
+  {
+    id: 5,
+    unit: "Track 06 · p9 Ex5",
+    title: "Chapter 3.2 — Monitors",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_06_p9_Ex5.mp3",
+    parts: [
+      { text: "A monitor is a computer component that shows ", blanks: [] },
+      { text: "images", blank: 1 },
+      { text: ". Most of today's monitors have ", blanks: [] },
+      { text: "flat panel", blank: 2 },
+      { text: " displays. They usually produce images using ", blanks: [] },
+      { text: "LCDs", blank: 3 },
+      { text: ". The older monitors used ", blanks: [] },
+      { text: "CRTs", blank: 4 },
+      { text: ", which made them ", blanks: [] },
+      { text: "bulky", blank: 5 },
+      { text: ". As monitors became thinner, image ", blanks: [] },
+      { text: "resolution", blank: 6 },
+      { text: " also improved. Displays are made up of tiny ", blanks: [] },
+      { text: "pixels", blank: 7 },
+      { text: ". A ", blanks: [] },
+      { text: "bitmap", blank: 8 },
+      { text: " organizes many pixels into a single image. ", blanks: [] },
+      { text: "Frame buffers", blank: 9 },
+      { text: " store bitmaps before displaying them on the monitor.", blanks: [] }
+    ]
+  },
+  {
+    id: 6,
+    unit: "Track 07 · p9 Ex6-7",
+    title: "Dialogue — New Monitors",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_07_p9_Ex6-7.mp3",
+    parts: [
+      { text: "Man: Have you seen our new monitors? They're pretty nice.\nWoman: Yeah, I really like the new ", blanks: [] },
+      { text: "HD resolution", blank: 1 },
+      { text: ".\nMan: I'm just glad we have ", blanks: [] },
+      { text: "flat panel", blank: 2 },
+      { text: " monitors now.\nWoman: Did the office have those ", blanks: [] },
+      { text: "bulky", blank: 3 },
+      { text: " monitors before?\nMan: Yes, we had ", blanks: [] },
+      { text: "CRT", blank: 4 },
+      { text: "-based monitors.\nWoman: What's a CRT?\nMan: A ", blanks: [] },
+      { text: "cathode ray tube", blank: 5 },
+      { text: ". That's what made the old monitors so bulky.\nWoman: Those took up way too much ", blanks: [] },
+      { text: "space", blank: 6 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 7,
+    unit: "Track 08 · p11 Ex5",
+    title: "Vanray 5650 — Peripherals",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_08_p11_Ex5.mp3",
+    parts: [
+      { text: "Every desktop model comes with a Vanray ", blanks: [] },
+      { text: "keyboard", blank: 1 },
+      { text: ". It also comes with ", blanks: [] },
+      { text: "wrist support", blank: 2 },
+      { text: " to reduce ", blanks: [] },
+      { text: "muscle strain", blank: 3 },
+      { text: ". Each unit also comes with the Vanray EM750 ", blanks: [] },
+      { text: "electromechanical", blank: 4 },
+      { text: " mouse. Scroll smoothly with a durable ", blanks: [] },
+      { text: "scroll wheel", blank: 5 },
+      { text: ". The Vanray Omega ", blanks: [] },
+      { text: "optical", blank: 6 },
+      { text: " mouse tracks movements with ", blanks: [] },
+      { text: "LEDs", blank: 7 },
+      { text: ". It guides pointers across ", blanks: [] },
+      { text: "GUIs", blank: 8 },
+      { text: " with precise smooth movements.", blanks: [] }
+    ]
+  },
+  {
+    id: 8,
+    unit: "Track 09 · p11 Ex6-7",
+    title: "Dialogue — Buying a Mouse",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_09_p11_Ex6-7.mp3",
+    parts: [
+      { text: "Man: Hi, I'd like to buy this ", blanks: [] },
+      { text: "keyboard", blank: 1 },
+      { text: ".\nWoman: Can I also interest you in a new ", blanks: [] },
+      { text: "mouse", blank: 2 },
+      { text: "?\nMan: I'm pretty happy with my old one.\nWoman: What kind is it?\nMan: It's an ", blanks: [] },
+      { text: "electromechanical", blank: 3 },
+      { text: " mouse.\nWoman: I think you'll really like an ", blanks: [] },
+      { text: "optical", blank: 4 },
+      { text: " mouse. They're much more ", blanks: [] },
+      { text: "precise", blank: 5 },
+      { text: ".\nMan: That could really help me out. I'm a ", blanks: [] },
+      { text: "graphic designer", blank: 6 },
+      { text: ".\nWoman: Then you should definitely have the newer technology.", blanks: [] }
+    ]
+  },
+  {
+    id: 9,
+    unit: "Track 10 · p13 Ex5",
+    title: "CompuLiving — Let's Talk Storage",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_10_p13_Ex5.mp3",
+    parts: [
+      { text: "Early computers relied on ", blanks: [] },
+      { text: "magnetic tape", blank: 1 },
+      { text: ". Developers soon replaced these with more efficient ", blanks: [] },
+      { text: "floppy disks", blank: 2 },
+      { text: ". For a while, ", blanks: [] },
+      { text: "zip drives", blank: 3 },
+      { text: " were a larger capacity solution. Then ", blanks: [] },
+      { text: "CDs", blank: 4 },
+      { text: " came along. ", blanks: [] },
+      { text: "DVDs", blank: 5 },
+      { text: " have similar benefits and hold much more data. Today, we have compact ", blanks: [] },
+      { text: "flash memory", blank: 6 },
+      { text: ". Tiny flash drives hold more information than earlier devices. Unlike most DVDs and CDs, flash drives are easily ", blanks: [] },
+      { text: "erasable", blank: 7 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 10,
+    unit: "Track 11 · p13 Ex6-7",
+    title: "Dialogue — Flash Drive vs CDs",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_11_p13_Ex6-7.mp3",
+    parts: [
+      { text: "Man: Excuse me. Can you help me pick out some ", blanks: [] },
+      { text: "CDs", blank: 1 },
+      { text: "?\nWoman: What do you need them for?\nMan: ", blanks: [] },
+      { text: "Data storage", blank: 2 },
+      { text: ". I'm moving about 10 ", blanks: [] },
+      { text: "gigabytes", blank: 3 },
+      { text: " off my employer's ", blanks: [] },
+      { text: "hard drive", blank: 4 },
+      { text: ".\nWoman: That's going to take a lot of CDs. I'd recommend a ", blanks: [] },
+      { text: "flash drive", blank: 5 },
+      { text: " instead.\nWoman: I have one here with a 16-gigabyte ", blanks: [] },
+      { text: "capacity", blank: 6 },
+      { text: ".\nMan: Oh, so all the data will fit on one device.\nWoman: Right. Plus, you can ", blanks: [] },
+      { text: "erase", blank: 7 },
+      { text: " it later and use it for something else.", blanks: [] }
+    ]
+  },
+  {
+    id: 11,
+    unit: "Track 12 · p15 Ex5",
+    title: "Troubleshooting Guide — Overheating",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_12_p15_Ex5.mp3",
+    parts: [
+      { text: "The most common cause of overheating is a malfunctioning ", blanks: [] },
+      { text: "fan", blank: 1 },
+      { text: ". Most computers have a ", blanks: [] },
+      { text: "heat sink", blank: 2 },
+      { text: ". To troubleshoot overheating, first remove the computer's cover. Then check whether the fan is functioning. If the fan is not functioning, check the power supply. Some fans attach to the ", blanks: [] },
+      { text: "motherboard", blank: 3 },
+      { text: ". Others connect directly to the ", blanks: [] },
+      { text: "PSU", blank: 4 },
+      { text: ". Reconnect it to the proper ", blanks: [] },
+      { text: "port", blank: 5 },
+      { text: " if it is disconnected. If the fan is functioning, it may be inadequate. Additional hardware installations produce extra heat. Check ", blanks: [] },
+      { text: "bays", blank: 6 },
+      { text: " for heat from added ", blanks: [] },
+      { text: "processors", blank: 7 },
+      { text: " or CD, DVD drives. You may need to purchase a stronger fan.", blanks: [] }
+    ]
+  },
+  {
+    id: 12,
+    unit: "Track 13 · p15 Ex6-7",
+    title: "Dialogue — Tech Support: Overheating",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_13_p15_Ex6-7.mp3",
+    parts: [
+      { text: "Man: This is tech support. How may I help you?\nWoman: My computer keeps ", blanks: [] },
+      { text: "overheating", blank: 1 },
+      { text: ".\nMan: Have you checked whether the ", blanks: [] },
+      { text: "fan", blank: 2 },
+      { text: " is working?\nWoman: Yes, I opened the ", blanks: [] },
+      { text: "case", blank: 3 },
+      { text: " and I can see the fan spinning.\nMan: Go ahead and try moving the hardware to different ", blanks: [] },
+      { text: "bays", blank: 4 },
+      { text: ".\nWoman: How would that help?\nMan: It helps to separate the ", blanks: [] },
+      { text: "processor", blank: 5 },
+      { text: " from other heat-producing ", blanks: [] },
+      { text: "hardware", blank: 6 },
+      { text: ".\nWoman: Okay, I'll call back if that doesn't work.", blanks: [] }
+    ]
+  },
+  {
+    id: 13,
+    unit: "Track 14 · p17 Ex5",
+    title: "Linko Connect — Products & Services",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_14_p17_Ex5.mp3",
+    parts: [
+      { text: "Get our lowest available price with the bronze package. Link multiple home or office computers together with a ", blanks: [] },
+      { text: "LAN", blank: 1 },
+      { text: ". We use enhanced ", blanks: [] },
+      { text: "Cat 5", blank: 2 },
+      { text: " cables to connect your machines. With our silver package, you'll get a ", blanks: [] },
+      { text: "WLAN", blank: 3 },
+      { text: ". Our wireless networks transmit signals through a central ", blanks: [] },
+      { text: "router", blank: 4 },
+      { text: ". Each router's ", blanks: [] },
+      { text: "antenna", blank: 5 },
+      { text: " can transmit signals from blocks away. Finally, our gold package includes our best high-speed ", blanks: [] },
+      { text: "broadband", blank: 6 },
+      { text: ". You'll surf the internet at 50 ", blanks: [] },
+      { text: "Mbps", blank: 7 },
+      { text: ". All packages come with separate or built-in ", blanks: [] },
+      { text: "modems", blank: 8 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 14,
+    unit: "Track 15 · p17 Ex6-7",
+    title: "Dialogue — Internet Service Options",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_15_p17_Ex6-7.mp3",
+    parts: [
+      { text: "Man: Our gold package comes with a wireless ", blanks: [] },
+      { text: "router", blank: 1 },
+      { text: ", and its connection speed is 40 ", blanks: [] },
+      { text: "megabits per second", blank: 2 },
+      { text: ".\nWoman: I don't need that. I already have a router.\nMan: In that case, I recommend our ", blanks: [] },
+      { text: "basic package", blank: 3 },
+      { text: ". It doesn't come with a router.\nWoman: But is it as fast?\nMan: Yes, it's the same ", blanks: [] },
+      { text: "speed", blank: 4 },
+      { text: ". You'll just save ", blanks: [] },
+      { text: "money", blank: 5 },
+      { text: " on the router.\nWoman: Great. I'll take that.", blanks: [] }
+    ]
+  },
+  {
+    id: 15,
+    unit: "Track 16 · p19 Ex5",
+    title: "Dear Mr. Tech — Operating Systems",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_16_p19_Ex5.mp3",
+    parts: [
+      { text: "Each operating system, ", blanks: [] },
+      { text: "OS", blank: 1 },
+      { text: ", has different benefits. Apple produces a popular OS called OS 10. This system has fewer known ", blanks: [] },
+      { text: "viruses", blank: 2 },
+      { text: " than other systems. Microsoft makes an OS called ", blanks: [] },
+      { text: "Windows", blank: 3 },
+      { text: ". One of its benefits is software ", blanks: [] },
+      { text: "compatibility", blank: 4 },
+      { text: ". Windows works with a wide variety of programs. Finally, there is also the ", blanks: [] },
+      { text: "Linux", blank: 5 },
+      { text: " OS. Linux is ", blanks: [] },
+      { text: "open source", blank: 6 },
+      { text: " and easy to ", blanks: [] },
+      { text: "customize", blank: 7 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 16,
+    unit: "Track 17 · p19 Ex6-7",
+    title: "Dialogue — OS 10 vs Windows",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_17_p19_Ex6-7.mp3",
+    parts: [
+      { text: "Woman: Hey, you prefer ", blanks: [] },
+      { text: "OS 10", blank: 1 },
+      { text: " over Windows, don't you?\nMan: Not at all. ", blanks: [] },
+      { text: "Windows", blank: 2 },
+      { text: " is my favorite operating system.\nWoman: But OS 10 is less likely to get ", blanks: [] },
+      { text: "viruses", blank: 3 },
+      { text: ".\nMan: I see where you're coming from, but I prefer a large software ", blanks: [] },
+      { text: "library", blank: 4 },
+      { text: ".\nWoman: But don't you agree that OS 10 is better all around?\nMan: Nope. I guess we have to agree to ", blanks: [] },
+      { text: "disagree", blank: 5 },
+      { text: ".", blanks: [] }
+    ]
+  },
+  {
+    id: 17,
+    unit: "Track 18 · p21 Ex5",
+    title: "How Do They Say It? — Math Symbols",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_18_p21_Ex5.mp3",
+    parts: [
+      { text: "Symbol: =  →  ", blanks: [] },
+      { text: "equals", blank: 1 },
+      { text: "\n1 quarter equals 0.25\n\nSymbol: +  →  ", blanks: [] },
+      { text: "plus", blank: 2 },
+      { text: " / add\n\nSymbol: -  →  minus / less / ", blanks: [] },
+      { text: "subtract", blank: 3 },
+      { text: "\n\nSymbol: *  →  ", blanks: [] },
+      { text: "multiplied by", blank: 4 },
+      { text: " / times\n\nSymbol: /  →  ", blanks: [] },
+      { text: "divided by", blank: 5 },
+      { text: " / ", blanks: [] },
+      { text: "over", blank: 6 },
+      { text: "\n\nNumber: 1,900  →  we spent $", blanks: [] },
+      { text: "1900", blank: 7 },
+      { text: " on office supplies.", blanks: [] }
+    ]
+  },
+  {
+    id: 18,
+    unit: "Track 19 · p21 Ex6-7",
+    title: "Dialogue — Math Test",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_19_p21_Ex6-7.mp3",
+    parts: [
+      { text: "Woman: The equation started with 1400 ", blanks: [] },
+      { text: "divided by", blank: 1 },
+      { text: " 5.\nMan: So 1400 times 5 equals ", blanks: [] },
+      { text: "7000", blank: 2 },
+      { text: ", right?\nWoman: No. You ", blanks: [] },
+      { text: "multiplied", blank: 3 },
+      { text: " instead of divided.\nMan: I get it now. It should be 1400 ", blanks: [] },
+      { text: "over", blank: 4 },
+      { text: " 5.\nWoman: Exactly. And that equals ", blanks: [] },
+      { text: "280", blank: 5 },
+      { text: ".\nMan: That's completely different. No wonder the rest of my equation was wrong.", blanks: [] }
+    ]
+  },
+  {
+    id: 19,
+    unit: "Track 20 · p23 Ex5",
+    title: "10.1 — Quantities in Engineering",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_20_p23_Ex5.mp3",
+    parts: [
+      { text: "Some quantities are expressed in ", blanks: [] },
+      { text: "fractions", blank: 1 },
+      { text: ". Example: 4 out of every 5 people in a region have home computers. Therefore, 4/5 of people have home computers. The same number can be a ", blanks: [] },
+      { text: "percentage", blank: 2 },
+      { text: ". Percentages sometimes appear as ", blanks: [] },
+      { text: "decimal", blank: 3 },
+      { text: " numbers. It is easy to convert a percentage to a fraction. Simply use the percentage as a ", blanks: [] },
+      { text: "numerator", blank: 4 },
+      { text: " and 100 as the ", blanks: [] },
+      { text: "denominator", blank: 5 },
+      { text: ". Then ", blanks: [] },
+      { text: "reduce", blank: 6 },
+      { text: " the fraction to its lowest form.", blanks: [] }
+    ]
+  },
+  {
+    id: 20,
+    unit: "Track 21 · p23 Ex6-7",
+    title: "Dialogue — Percentages & Fractions",
+    audio: "CP_COMPUTER_ENGINEERING_BOOK_1_CD1_Track_21_p23_Ex6-7.mp3",
+    parts: [
+      { text: "Woman: I'm having trouble converting ", blanks: [] },
+      { text: "percentages", blank: 1 },
+      { text: " into ", blanks: [] },
+      { text: "fractions", blank: 2 },
+      { text: ".\nMan: Just make a fraction with 100 as the ", blanks: [] },
+      { text: "denominator", blank: 3 },
+      { text: " and the percentage as the ", blanks: [] },
+      { text: "numerator", blank: 4 },
+      { text: ".\nWoman: So the decimal number is 0.75. I put that over 100?\nMan: Not exactly. You need to convert the percentage into a ", blanks: [] },
+      { text: "whole number", blank: 5 },
+      { text: ".\nWoman: Oh, of course. So it's 75 over 100.\nMan: Exactly. Then don't forget to ", blanks: [] },
+      { text: "reduce", blank: 6 },
+      { text: " the fraction to its lowest form.", blanks: [] }
+    ]
+  }
+];
+
+// State
+const state = {
+  current: 0,
+  done: new Set(),
+  checked: new Set()
+};
+
+function buildAll() {
+  const nav = document.getElementById('sectionNav');
+  const container = document.getElementById('exercises');
+  nav.innerHTML = '';
+  container.innerHTML = '';
+
+  EXERCISES.forEach((ex, idx) => {
+    // Nav button
+    const btn = document.createElement('button');
+    btn.className = 'sec-btn' + (idx === 0 ? ' active' : '');
+    btn.textContent = `${idx + 1}`;
+    btn.id = `navbtn-${idx}`;
+    btn.onclick = () => goTo(idx);
+    nav.appendChild(btn);
+
+    // Exercise panel
+    const panel = document.createElement('div');
+    panel.className = 'exercise' + (idx === 0 ? ' active' : '');
+    panel.id = `ex-${idx}`;
+
+    const answers = getAnswers(ex);
+    const totalBlanks = answers.length;
+
+    panel.innerHTML = `
+      <div class="unit-tag">${ex.unit}</div>
+      <div class="ex-title">${ex.title}</div>
+      <div class="audio-wrap">
+        <audio controls preload="none" id="audio-${idx}">
+          <source src="${ex.audio}" type="audio/mpeg">
+        </audio>
+        <div class="audio-hint">🔊 Listen, then fill in the blanks below</div>
+      </div>
+      <div class="passage" id="passage-${idx}">${buildPassage(ex, idx)}</div>
+      <div class="score-box" id="score-${idx}">
+        <div class="score-num" id="score-num-${idx}">0/${totalBlanks}</div>
+        <div class="score-details" id="score-details-${idx}"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-reset" onclick="resetEx(${idx})">↺ Reset</button>
+        <button class="btn btn-check" id="check-${idx}" onclick="checkEx(${idx})">Check Answers</button>
+        <button class="btn btn-next" id="next-${idx}" onclick="goNext(${idx})">Next →</button>
+      </div>
+    `;
+    container.appendChild(panel);
+  });
+
+  updateProgress();
+}
+
+function getAnswers(ex) {
+  const ans = [];
+  ex.parts.forEach(p => {
+    if (p.blank !== undefined) ans.push({ num: p.blank, answer: p.text });
+  });
+  return ans.sort((a, b) => a.num - b.num);
+}
+
+function buildPassage(ex, idx) {
+  let html = '';
+  ex.parts.forEach(p => {
+    if (p.blank !== undefined) {
+      const width = Math.max(80, p.text.length * 9 + 20);
+      html += `
+        <span class="blank-wrap" id="wrap-${idx}-${p.blank}">
+          <span class="blank-num">${p.blank}</span>
+          <input class="blank-input" id="inp-${idx}-${p.blank}"
+            type="text" autocomplete="off" autocorrect="off" spellcheck="false"
+            style="width:${Math.min(width, 140)}px"
+            placeholder="…">
+          <span class="answer-reveal" id="reveal-${idx}-${p.blank}"></span>
+        </span>`;
+    } else {
+      // Plain text — handle newlines
+      html += p.text.replace(/\n/g, '<br>');
+    }
+  });
+  return html;
+}
+
+function checkEx(idx) {
+  const ex = EXERCISES[idx];
+  const answers = getAnswers(ex);
+  let correct = 0;
+
+  answers.forEach(({ num, answer }) => {
+    const inp = document.getElementById(`inp-${idx}-${num}`);
+    const reveal = document.getElementById(`reveal-${idx}-${num}`);
+    if (!inp) return;
+
+    const userVal = inp.value.trim().toLowerCase();
+    const correctVal = answer.trim().toLowerCase();
+
+    if (userVal === correctVal) {
+      inp.classList.add('correct');
+      inp.classList.remove('wrong');
+      reveal.classList.remove('show');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      inp.classList.remove('correct');
+      reveal.textContent = `✓ ${answer}`;
+      reveal.classList.add('show');
+    }
+    inp.disabled = true;
+  });
+
+  const total = answers.length;
+  const scoreBox = document.getElementById(`score-${idx}`);
+  const scoreNum = document.getElementById(`score-num-${idx}`);
+  const scoreDetails = document.getElementById(`score-details-${idx}`);
+
+  scoreBox.classList.add('show');
+  scoreNum.textContent = `${correct}/${total}`;
+  scoreNum.style.color = correct === total ? 'var(--correct)' : correct >= total / 2 ? 'var(--accent)' : 'var(--wrong)';
+
+  if (correct === total) {
+    scoreDetails.textContent = '🎉 Perfect score! Great listening!';
+  } else if (correct >= total / 2) {
+    scoreDetails.textContent = `Good job! ${total - correct} wrong answer${total - correct > 1 ? 's' : ''} — check the red ones above.`;
+  } else {
+    scoreDetails.textContent = `Keep practicing! ${total - correct} wrong answer${total - correct > 1 ? 's' : ''} — review the red ones above.`;
+  }
+
+  document.getElementById(`check-${idx}`).style.display = 'none';
+  state.checked.add(idx);
+
+  const nextBtn = document.getElementById(`next-${idx}`);
+  if (idx < EXERCISES.length - 1) {
+    nextBtn.classList.add('show');
+    nextBtn.innerHTML = 'Next Exercise →';
+  } else {
+    nextBtn.classList.add('show');
+    nextBtn.innerHTML = '🏁 Finish';
+  }
+
+  if (correct === total) {
+    state.done.add(idx);
+    document.getElementById(`navbtn-${idx}`).classList.add('done');
+    updateProgress();
+  }
+}
+
+function resetEx(idx) {
+  const ex = EXERCISES[idx];
+  const answers = getAnswers(ex);
+  answers.forEach(({ num }) => {
+    const inp = document.getElementById(`inp-${idx}-${num}`);
+    const reveal = document.getElementById(`reveal-${idx}-${num}`);
+    if (inp) {
+      inp.value = '';
+      inp.classList.remove('correct', 'wrong');
+      inp.disabled = false;
+    }
+    if (reveal) reveal.classList.remove('show');
+  });
+  document.getElementById(`score-${idx}`).classList.remove('show');
+  document.getElementById(`check-${idx}`).style.display = '';
+  const nextBtn = document.getElementById(`next-${idx}`);
+  nextBtn.classList.remove('show');
+  state.checked.delete(idx);
+}
+
+function goNext(idx) {
+  if (idx < EXERCISES.length - 1) {
+    goTo(idx + 1);
+  } else {
+    // Show complete
+    document.querySelectorAll('.exercise').forEach(e => e.classList.remove('active'));
+    document.getElementById('completeScreen').classList.add('show');
+    updateProgress();
+  }
+}
+
+function goTo(idx) {
+  document.querySelectorAll('.exercise').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.sec-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('completeScreen').classList.remove('show');
+
+  document.getElementById(`ex-${idx}`).classList.add('active');
+  document.getElementById(`navbtn-${idx}`).classList.add('active');
+
+  // Scroll nav button into view
+  const navBtn = document.getElementById(`navbtn-${idx}`);
+  navBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+  state.current = idx;
+  updateProgress();
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  const total = EXERCISES.length;
+  const pct = Math.round(((state.current + 1) / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${state.current + 1} / ${total}`;
+}
+
+function restartAll() {
+  state.current = 0;
+  state.done.clear();
+  state.checked.clear();
+  buildAll();
+  document.getElementById('completeScreen').classList.remove('show');
+  goTo(0);
+}
+
+buildAll();
+</script>
+</body>
+</html>
